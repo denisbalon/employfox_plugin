@@ -288,6 +288,7 @@ function parseExpBlock(expBlock) {
 
         outputExp.companyTitle = expBlock.querySelector('.pv-entity__company-summary-info h3 span:last-of-type')?.innerText;
         outputExp.companyDuration = expBlock.querySelector('.pv-entity__company-summary-info>h4 span:last-of-type')?.innerText;
+        outputExp.companyDurationMonths = parseDuration(outputExp.companyDuration);
         outputExp.companyURL = expBlock.querySelector('a[data-control-name=background_details_company]')?.href;
 
         positionsBlocks.forEach((positionBlock) => {
@@ -301,9 +302,7 @@ function parseExpBlock(expBlock) {
             };
             positionItem.title = positionBlock.querySelector('.pv-entity__summary-info-v2 h3 span:last-of-type')?.innerText;
             positionItem.duration = positionBlock.querySelector('.pv-entity__summary-info-v2>div>h4:last-of-type span:last-of-type')?.innerText;
-            let durationParsed = positionItem.duration.match(/(\d+)*(\d+)/g);
-            positionItem.durationMonths = Number(durationParsed[1] || 0) + Number(durationParsed[0] || 0) * 12;
-            outputExp.companyDurationMonths += positionItem.durationMonths;
+            positionItem.durationMonths = parseDuration(positionItem.duration);
 
             positionItem.region = positionBlock.querySelector('.pv-entity__location span:last-of-type')?.innerText;
             positionItem.description = positionBlock.querySelector('.pv-entity__description')?.innerText;
@@ -331,13 +330,12 @@ function parseExpBlock(expBlock) {
 
         positionItem.title = expBlock.querySelector('.pv-entity__summary-info h3')?.innerText;
         positionItem.duration = expBlock.querySelector('.pv-entity__summary-info>div>h4:last-of-type span:last-of-type')?.innerText;
-        let durationParsed = positionItem.duration.match(/(\d+)*(\d+)/g);
-        positionItem.durationMonths = Number(durationParsed[1] || 0) + Number(durationParsed[0] || 0) * 12;
-        outputExp.companyDurationMonths = positionItem.durationMonths;
-
+        positionItem.durationMonths = parseDuration(positionItem.duration);
         positionItem.region = expBlock.querySelector('.pv-entity__location span:last-of-type')?.innerText;
 
         outputExp.positionsList.push(positionItem);
+        outputExp.companyDuration = positionItem.duration;
+        outputExp.companyDurationMonths = positionItem.durationMonths;
     }
 
     return outputExp;
@@ -371,6 +369,13 @@ function parseLanguageBlock(languageBlock) {
     return languageData;
 }
 
+function parseDuration(durationString) {
+    let durationParsed = durationString.match(/(\d+)*(\d+)/g);
+    if (durationParsed.length == 1) {
+        durationParsed.unshift(0);
+    }
+    return Number(durationParsed[1] || 0) + Number(durationParsed[0] || 0) * 12;
+}
 
 function randomTimeout(min, max) {
     return Math.round(Math.random() * (max - min)) + min;
