@@ -212,6 +212,20 @@ function parseIframeContents(iframe, container) {
     //  - Senior Dev, Valant (3 y)
     //  - Senior Dev (1 y) . . . DevPro (3 y)
 
+    let totalExpMonths = outputExpList.map((item) => { return item.companyDurationMonths }).reduce((total, item) => { return total + item });
+    let totalExpString = 'Опыт:';
+    if (outputExpList.length == 0 || !totalExpMonths) {
+        totalExpString += ' нет';
+    } else {
+        if (Math.floor(totalExpMonths/12) > 0) {
+            totalExpString += ` ${ Math.floor(totalExpMonths/12) } лет`;
+        }
+        if ((totalExpMonths % 12) > 0) {
+            totalExpString += ` ${ totalExpMonths % 12 } мес`;
+        }
+        totalExpString += `, ${ outputExpList.length } комп.`;
+    }
+
     let expString = outputExpList.map((companyItem) => {
         if (companyItem.positionsList.length === 1) {
             return ` • ${companyItem.positionsList[0].title}, <b>${companyItem.companyTitle}</b> (${companyItem.positionsList[0].duration})`;
@@ -221,7 +235,7 @@ function parseIframeContents(iframe, container) {
             }).join(', ') + `, <b>${companyItem.companyTitle}</b> (${companyItem.companyDuration})`;
         }
     }).join('<br />');
-    outDiv.innerHTML = expString;
+    outDiv.innerHTML = totalExpString + '<br />' + expString;
     leftColumnContainer.append(outDiv);
 
     // Append skills data
@@ -262,6 +276,7 @@ function parseExpBlock(expBlock) {
         companyTitle: '',
         companyURL: '',
         companyDuration: '',
+        companyDurationMonths: 0,
         positionsList: [],
     };
 
@@ -280,11 +295,16 @@ function parseExpBlock(expBlock) {
                 title: '',
                 period: null,
                 duration: '',
+                durationMonths: 0,
                 description: '',
                 region: '',
             };
             positionItem.title = positionBlock.querySelector('.pv-entity__summary-info-v2 h3 span:last-of-type')?.innerText;
             positionItem.duration = positionBlock.querySelector('.pv-entity__summary-info-v2>div>h4:last-of-type span:last-of-type')?.innerText;
+            let durationParsed = positionItem.duration.match(/(\d+)*(\d+)/g);
+            positionItem.durationMonths = Number(durationParsed[1] || 0) + Number(durationParsed[0] || 0) * 12;
+            outputExp.companyDurationMonths += positionItem.durationMonths;
+
             positionItem.region = positionBlock.querySelector('.pv-entity__location span:last-of-type')?.innerText;
             positionItem.description = positionBlock.querySelector('.pv-entity__description')?.innerText;
 
@@ -293,19 +313,28 @@ function parseExpBlock(expBlock) {
 
     } else { // case when there only one position in this company
 
-        outputExp.companyTitle = expBlock.querySelector('.pv-entity__summary-info .pv-entity__secondary-title')?.innerText;
+        let companyTitleContainer = expBlock.querySelector('.pv-entity__summary-info .pv-entity__secondary-title');
+        if (companyTitleContainer) {
+            outputExp.companyTitle = Array.from(companyTitleContainer.childNodes).filter((node) => { return node.nodeType == 3 }).map((node) => { return node.nodeValue }).join('');
+        }
+
         outputExp.companyURL = expBlock.querySelector('a[data-control-name=background_details_company]')?.href;
 
         let positionItem = {
             title: '',
             period: null,
             duration: '',
+            durationMonths: 0,
             description: '',
             region: '',
         };
 
         positionItem.title = expBlock.querySelector('.pv-entity__summary-info h3')?.innerText;
         positionItem.duration = expBlock.querySelector('.pv-entity__summary-info>div>h4:last-of-type span:last-of-type')?.innerText;
+        let durationParsed = positionItem.duration.match(/(\d+)*(\d+)/g);
+        positionItem.durationMonths = Number(durationParsed[1] || 0) + Number(durationParsed[0] || 0) * 12;
+        outputExp.companyDurationMonths = positionItem.durationMonths;
+
         positionItem.region = expBlock.querySelector('.pv-entity__location span:last-of-type')?.innerText;
 
         outputExp.positionsList.push(positionItem);
