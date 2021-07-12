@@ -188,6 +188,20 @@ function parseIframeContents(iframe, container) {
 
     }
 
+    let additionalInfoContainer = document.createElement('div');
+    additionalInfoContainer.classList.add('user_extended_info_container');
+
+    let leftColumnContainer = document.createElement('div');
+    leftColumnContainer.classList.add('user_extended_info_column');
+    additionalInfoContainer.append(leftColumnContainer);
+
+    let rightColumnContainer = document.createElement('div');
+    rightColumnContainer.classList.add('user_extended_info_column');
+    additionalInfoContainer.append(rightColumnContainer);
+
+    container.append(additionalInfoContainer);
+
+
     // Append experience data
     let outDiv = document.createElement('div');
     outDiv.style.width = "100%";
@@ -208,7 +222,7 @@ function parseIframeContents(iframe, container) {
         }
     }).join('<br />');
     outDiv.innerHTML = expString;
-    container.append(outDiv);
+    leftColumnContainer.append(outDiv);
 
     // Append skills data
     let skillsContainer = document.createElement('ul');
@@ -221,7 +235,7 @@ function parseIframeContents(iframe, container) {
         skillsContainer.append(item);
     });
 
-    container.append(skillsContainer);
+    rightColumnContainer.append(skillsContainer);
 
     // Append language data
     let languageContainer = document.createElement('ul');
@@ -234,7 +248,7 @@ function parseIframeContents(iframe, container) {
         languageContainer.append(item);
     });
 
-    container.append(languageContainer);
+    rightColumnContainer.append(languageContainer);
 
     iframe.remove();
     console.log('iframe removed');
