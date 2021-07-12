@@ -1,0 +1,13 @@
+.user_extended_info_block {
+    list-style-type: none;
+    margin: 10px 0;
+    padding: 0 0 0 20px;
+    width: 100%;
+    font-size: 13px;
+}
+
+.user_extended_info_block li {
+    display: inline-block;
+    padding: 0;
+    margin: 0 5px 5px 0;
+}
