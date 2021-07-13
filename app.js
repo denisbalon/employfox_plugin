@@ -34,7 +34,6 @@ let observer = new MutationObserver(function(mutations) {
             setTimeout(processResults, 1000);
         }
     });
-
 })
 
 let config = {
@@ -52,7 +51,7 @@ function processResults() {
     let results = document.querySelectorAll(resultsSelector);
 
     // Use this if you want to parse only 1st element from results
-    // let results = [document.querySelector(resultsSelector)];
+    // let results = [document.querySelector(resultsSelector)].filter((item) => { return !!item; });
 
     results.forEach(function(item) {
         let link = item.querySelector(linkSelector);
@@ -124,7 +123,7 @@ function scrollIframeAndParse(iframe, container) {
                                     iframe.contentWindow.scrollBy(0, 300);
                                     setTimeout(function() {
                                         expandHiddenSections(iframe, container);
-                                    }, 600);
+                                    }, 1000);
                                 }, 60);
                             }, 50);
                         }, 70);
@@ -147,138 +146,20 @@ function expandHiddenSections(iframe, container) {
         profileContainer.querySelector('.pv-accomplishments-block__expand[aria-controls="languages-expandable-content"]')?.click();
         setTimeout(function() {
             parseIframeContents(iframe, container, profileContainer);
-        }, 200);
+        }, 500);
     } else {
         parseIframeContents(iframe, container, profileContainer);
     }
 }
 
 function parseIframeContents(iframe, container, profileContainer) {
-    let outputExpList = [];
-    let skillsList = [];
-    let languagesList = [];
-    
     console.log('parsing iframe...');    
-                                    
-    if (profileContainer) {
 
-        console.log(profileContainer);
+    let outputExpList = parseExperience(profileContainer);
+    let skillsList = parseSkills(profileContainer);
+    let languagesList = parseLanguages(profileContainer);
 
-        // Parse experience
-        let experiences = profileContainer.querySelectorAll('#experience-section ul.section-info>li');
-        experiences.forEach( (expBlock) => {
-            let expData = parseExpBlock(expBlock);
-            outputExpList.push(expData);
-        });
-
-        console.log('parsed Experience', outputExpList);
-
-        // Parse skills
-        let topSkills = profileContainer.querySelectorAll('.pv-profile-section ol.pv-skill-categories-section__top-skills>li');
-        topSkills.forEach( (skillBlock) => {
-            let skillData = parseSkillBlock(skillBlock);
-            skillsList.push(skillData);
-        });
-
-        let skills = profileContainer.querySelectorAll('#skill-categories-expanded .pv-skill-category-list ol.pv-skill-category-list__skills_list>li')
-        skills.forEach( (skillBlock) => {
-            let skillData = parseSkillBlock(skillBlock);
-            skillsList.push(skillData);
-        });
-        
-        console.log('parsed Skills', skillsList);
-
-
-        // Parse languages
-        let languages = profileContainer.querySelectorAll('#languages-expandable-content ul.pv-accomplishments-block__list>li');
-        languages.forEach( (languageBlock) => {
-            let languageData = parseLanguageBlock(languageBlock);
-            languagesList.push(languageData);
-        });
-
-        console.log('parsed Languages', languagesList);
-
-    }
-
-    let additionalInfoContainer = document.createElement('div');
-    additionalInfoContainer.classList.add('user_extended_info_container');
-
-    let leftColumnContainer = document.createElement('div');
-    leftColumnContainer.classList.add('user_extended_info_column');
-    additionalInfoContainer.append(leftColumnContainer);
-
-    let rightColumnContainer = document.createElement('div');
-    rightColumnContainer.classList.add('user_extended_info_column');
-    additionalInfoContainer.append(rightColumnContainer);
-
-    container.append(additionalInfoContainer);
-
-
-    // Append experience data
-    let outDiv = document.createElement('div');
-    outDiv.style.width = "100%";
-    outDiv.style.fontSize = "13px";
-    outDiv.style.padding = "0 0 0 17px";
-
-    // Example of output:
-    //  - Senior Dev, Valant (3 y)
-    //  - Senior Dev (1 y) . . . DevPro (3 y)
-
-    let totalExpMonths = outputExpList.map((item) => { return item.companyDurationMonths }).reduce((total, item) => { return total + item }, 0);
-    let totalExpString = 'Опыт:';
-    if (outputExpList.length == 0 || !totalExpMonths) {
-        totalExpString += ' нет';
-    } else {
-        if (Math.floor(totalExpMonths/12) > 0) {
-            totalExpString += ` ${ Math.floor(totalExpMonths/12) } лет`;
-        }
-        if ((totalExpMonths % 12) > 0) {
-            totalExpString += ` ${ totalExpMonths % 12 } мес`;
-        }
-        totalExpString += `, ${ outputExpList.length } комп.`;
-    }
-
-    let expString = outputExpList.map((companyItem) => {
-        if (companyItem.positionsList.length === 1) {
-            return ` • ${companyItem.positionsList[0].title}, <b>${companyItem.companyTitle}</b> (${companyItem.positionsList[0].duration})`;
-        } else {
-            return ' • ' + companyItem.positionsList.map(positionItem => {
-                return `${positionItem.title} (${positionItem.duration})`;
-            }).join(', ') + `, <b>${companyItem.companyTitle}</b> (${companyItem.companyDuration})`;
-        }
-    }).join('<br />');
-    outDiv.innerHTML = totalExpString + '<br />' + expString;
-    leftColumnContainer.append(outDiv);
-
-    // Append skills data
-    let skillsContainer = document.createElement('ul');
-    skillsContainer.classList.add('user_extended_info_block');
-    skillsContainer.classList.add('user_extended_info_skills');
-
-    skillsList.forEach((skill) => {
-        let item = document.createElement('li');
-        item.innerText = skill.title;
-        skillsContainer.append(item);
-    });
-
-    rightColumnContainer.append(skillsContainer);
-
-    // Append language data
-    let languageContainer = document.createElement('ul');
-    languageContainer.classList.add('user_extended_info_block');
-    languageContainer.classList.add('user_extended_info_languages');
-
-    languagesList.forEach((language) => {
-        let item = document.createElement('li');
-        let output = `<b>${language.title}</b>`;
-        if (language.level) {
-            output += ` (${language.level})`;
-        }
-        item.innerHTML = output;
-        languageContainer.append(item);
-    });
-
-    rightColumnContainer.append(languageContainer);
+    drawUserData(outputExpList, skillsList, languagesList, container);
 
     iframe.remove();
     console.log('iframe removed');
@@ -286,6 +167,22 @@ function parseIframeContents(iframe, container, profileContainer) {
     processQueue();
 }
 
+function parseExperience(profileContainer) {
+    let outputExpList = [];
+    if (!profileContainer) {
+        return outputExpList;
+    }
+
+    let experiences = profileContainer.querySelectorAll('#experience-section ul.section-info>li');
+    experiences.forEach( (expBlock) => {
+        let expData = parseExpBlock(expBlock);
+        outputExpList.push(expData);
+    });
+
+    console.log('parsed Experience', outputExpList);
+
+    return outputExpList;
+}
 
 function parseExpBlock(expBlock) {
     let outputExp = {
@@ -321,17 +218,13 @@ function parseExpBlock(expBlock) {
             positionItem.durationMonths = parseDuration(positionItem.duration);
 
             positionItem.region = positionBlock.querySelector('.pv-entity__location span:last-of-type')?.innerText;
-            positionItem.description = positionBlock.querySelector('.pv-entity__description')?.innerText;
+            positionItem.description = visibleText(positionBlock.querySelector('.pv-entity__description'));
 
             outputExp.positionsList.push(positionItem);
         });
 
     } else { // case when there only one position in this company
-
-        let companyTitleContainer = expBlock.querySelector('.pv-entity__summary-info .pv-entity__secondary-title');
-        if (companyTitleContainer) {
-            outputExp.companyTitle = Array.from(companyTitleContainer.childNodes).filter((node) => { return node.nodeType == 3 }).map((node) => { return node.nodeValue }).join('');
-        }
+        outputExp.companyTitle = visibleText(expBlock.querySelector('.pv-entity__summary-info .pv-entity__secondary-title'));
 
         outputExp.companyURL = expBlock.querySelector('a[data-control-name=background_details_company]')?.href;
 
@@ -348,6 +241,7 @@ function parseExpBlock(expBlock) {
         positionItem.duration = expBlock.querySelector('.pv-entity__summary-info>div>h4:last-of-type span:last-of-type')?.innerText;
         positionItem.durationMonths = parseDuration(positionItem.duration);
         positionItem.region = expBlock.querySelector('.pv-entity__location span:last-of-type')?.innerText;
+        positionItem.description = visibleText(expBlock.querySelector('.pv-entity__description'));
 
         outputExp.positionsList.push(positionItem);
         outputExp.companyDuration = positionItem.duration;
@@ -355,6 +249,30 @@ function parseExpBlock(expBlock) {
     }
 
     return outputExp;
+}
+
+function parseSkills(profileContainer) {
+    let skillsList = [];
+
+    if (!profileContainer) {
+        return skillsList;
+    }
+
+    let topSkills = profileContainer.querySelectorAll('.pv-profile-section ol.pv-skill-categories-section__top-skills>li');
+    topSkills.forEach( (skillBlock) => {
+        let skillData = parseSkillBlock(skillBlock);
+        skillsList.push(skillData);
+    });
+
+    let skills = profileContainer.querySelectorAll('#skill-categories-expanded .pv-skill-category-list ol.pv-skill-category-list__skills_list>li')
+    skills.forEach( (skillBlock) => {
+        let skillData = parseSkillBlock(skillBlock);
+        skillsList.push(skillData);
+    });
+    
+    console.log('parsed Skills', skillsList);
+
+    return skillsList;
 }
 
 function parseSkillBlock(skillBlock) {
@@ -369,18 +287,32 @@ function parseSkillBlock(skillBlock) {
     return skillData;
 }
 
+function parseLanguages(profileContainer) {
+    let languagesList = [];
+
+    if (!profileContainer) {
+        return languagesList;
+    }
+    
+    let languages = profileContainer.querySelectorAll('#languages-expandable-content ul.pv-accomplishments-block__list>li');
+    languages.forEach( (languageBlock) => {
+        let languageData = parseLanguageBlock(languageBlock);
+        languagesList.push(languageData);
+    });
+
+    console.log('parsed Languages', languagesList);
+
+    return languagesList;
+}
+
 function parseLanguageBlock(languageBlock) {
     let languageData = {
         title: '',
         level: ''
     };
 
-    let titleContainer = languageBlock.querySelector('h4.pv-accomplishment-entity__title');
-
-    if (titleContainer) {
-        languageData.title = Array.from(titleContainer.childNodes).filter((node) => { return node.nodeType == 3 }).map((node) => { return node.nodeValue }).join('');
-        languageData.level = languageBlock.querySelector('.pv-accomplishment-entity__proficiency')?.innerText;
-    }
+    languageData.title = visibleText(languageBlock.querySelector('h4.pv-accomplishment-entity__title'));
+    languageData.level = languageBlock.querySelector('.pv-accomplishment-entity__proficiency')?.innerText;
 
     return languageData;
 }
@@ -393,6 +325,115 @@ function parseDuration(durationString) {
     return Number(durationParsed[1] || 0) + Number(durationParsed[0] || 0) * 12;
 }
 
+function drawUserData(outputExpList, skillsList, languagesList, container) {
+    let additionalInfoContainer = document.createElement('div');
+    additionalInfoContainer.classList.add('user_extended_info_container');
+
+    let leftColumnContainer = document.createElement('div');
+    leftColumnContainer.classList.add('user_extended_info_column');
+    additionalInfoContainer.append(leftColumnContainer);
+
+    let rightColumnContainer = document.createElement('div');
+    rightColumnContainer.classList.add('user_extended_info_column');
+    additionalInfoContainer.append(rightColumnContainer);
+
+    container.append(additionalInfoContainer);
+
+    leftColumnContainer.append(prepareExperience(outputExpList));
+    rightColumnContainer.append(prepareSkills(skillsList));
+    rightColumnContainer.append(prepareLanguages(languagesList));
+}
+
+function prepareExperience(outputExpList) {
+    let outDiv = document.createElement('div');
+    outDiv.style.width = "100%";
+    outDiv.style.fontSize = "13px";
+    outDiv.style.padding = "0 0 0 17px";
+
+    // Example of output:
+    //  - Senior Dev, Valant (3 y)
+    //  - Senior Dev (1 y) . . . DevPro (3 y)
+
+    let totalExpMonths = outputExpList.map((item) => { return item.companyDurationMonths }).reduce((total, item) => { return total + item }, 0);
+    let totalExpString = 'Опыт:';
+    if (outputExpList.length == 0 || !totalExpMonths) {
+        totalExpString += ' нет';
+    } else {
+        if (Math.floor(totalExpMonths/12) > 0) {
+            totalExpString += ` ${ Math.floor(totalExpMonths/12) } лет`;
+        }
+        if ((totalExpMonths % 12) > 0) {
+            totalExpString += ` ${ totalExpMonths % 12 } мес`;
+        }
+        totalExpString += `, ${ outputExpList.length } комп.`;
+    }
+
+    let expString = outputExpList.map((companyItem) => {
+
+
+        if (companyItem.positionsList.length === 1) {
+            return ` • ${preparePositionTitle(companyItem.positionsList[0])}, <b>${companyItem.companyTitle}</b> (${companyItem.positionsList[0].duration})`;
+        } else {
+            return ' • ' + companyItem.positionsList.map(positionItem => {
+                return `${preparePositionTitle(positionItem)} (${positionItem.duration})`;
+            }).join(', ') + `, <b>${companyItem.companyTitle}</b> (${companyItem.companyDuration})`;
+        }
+
+
+    }).join('<br />');
+    outDiv.innerHTML = totalExpString + '<br />' + expString;
+
+    return outDiv;
+}
+
+function preparePositionTitle(positionItem) {
+    if (positionItem.description) {
+        return `<span title="${positionItem.description}">${positionItem.title}</span>`;
+    } else {
+        return positionItem.title;
+    }
+}
+
+function prepareSkills(skillsList) {
+    let skillsContainer = document.createElement('ul');
+    skillsContainer.classList.add('user_extended_info_block');
+    skillsContainer.classList.add('user_extended_info_skills');
+
+    skillsList.forEach((skill) => {
+        let item = document.createElement('li');
+        item.innerText = skill.title;
+        skillsContainer.append(item);
+    });
+
+    return skillsContainer;
+}
+
+function prepareLanguages(languagesList) {
+    let languageContainer = document.createElement('ul');
+    languageContainer.classList.add('user_extended_info_block');
+    languageContainer.classList.add('user_extended_info_languages');
+
+    languagesList.forEach((language) => {
+        let item = document.createElement('li');
+        let output = `<b>${language.title}</b>`;
+        if (language.level) {
+            output += ` (${language.level})`;
+        }
+        item.innerHTML = output;
+        languageContainer.append(item);
+    });
+
+    return languageContainer;
+}
+
 function randomTimeout(min, max) {
     return Math.round(Math.random() * (max - min)) + min;
+}
+
+function visibleText(container) {
+    if (!container) {
+        return '';
+    }
+    
+    return Array.from(container.childNodes).filter((node) => { return node.nodeType == 3 }).map((node) => { return node.nodeValue }).join('').trim();
 }
