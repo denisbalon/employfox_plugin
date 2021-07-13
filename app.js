@@ -52,8 +52,7 @@ function processResults() {
     let results = document.querySelectorAll(resultsSelector);
 
     // Use this if you want to parse only 1st element from results
-    // let results1 = document.querySelector(resultsSelector);
-    // let results = [results1];
+    // let results = [document.querySelector(resultsSelector)];
 
     results.forEach(function(item) {
         let link = item.querySelector(linkSelector);
@@ -90,14 +89,14 @@ function loadPage(container, link) {
 
     // iframe.allowTransparency = true;
     iframe.style.width = '500px';
-    iframe.style.height = '200px';
+    iframe.style.height = '400px';
     iframe.style.border = '1px solid #c1c1c1;';
     iframe.style.background = '#fff';
     iframe.style.zIndex = '-99999';
     iframe.style.scroll = 'auto';
     iframe.style.position = 'fixed';
-    iframe.style.left = leftOffset+'px';
-    iframe.style.top = topOffset+100+'px';
+    iframe.style.left = leftOffset+50+'px';
+    iframe.style.top = topOffset+50+'px';
     iframe.src = link.href;
     document.body.append(iframe);
 
@@ -108,38 +107,53 @@ function loadPage(container, link) {
 
 function scrollIframeAndParse(iframe, container) {
     setTimeout(function() {
-        iframe.contentWindow.scrollBy(0, 500);
+        iframe.contentWindow.scrollBy(0, 300);
         setTimeout(function() {
-            iframe.contentWindow.scrollBy(0, 500);
+            iframe.contentWindow.scrollBy(0, 300);
             setTimeout(function() {
-                iframe.contentWindow.scrollBy(0, 500);
+                iframe.contentWindow.scrollBy(0, 300);
                 setTimeout(function() {
-                    iframe.contentWindow.scrollBy(0, 500);
+                    iframe.contentWindow.scrollBy(0, 300);
                     setTimeout(function() {
-                        iframe.contentWindow.scrollBy(0, 500);
+                        iframe.contentWindow.scrollBy(0, 300);
                         setTimeout(function() {
-                            iframe.contentWindow.scrollBy(0, 500);
+                            iframe.contentWindow.scrollBy(0, 300);
                             setTimeout(function() {
-                                iframe.contentWindow.scrollBy(0, 500);
+                                iframe.contentWindow.scrollBy(0, 300);
                                 setTimeout(function() {
-                                    iframe.contentWindow.scrollBy(0, 500);
+                                    iframe.contentWindow.scrollBy(0, 300);
                                     setTimeout(function() {
-                                        parseIframeContents(iframe, container);
+                                        expandHiddenSections(iframe, container);
                                     }, 600);
-                                }, 50);
+                                }, 60);
                             }, 50);
-                        }, 50);
-                    }, 50);
+                        }, 70);
+                    }, 60);
                 }, 50);
-            }, 50);
-        }, 50);
+            }, 70);
+        }, 60);
     }, 50);
 }
 
-function parseIframeContents(iframe, container) {
+function expandHiddenSections(iframe, container) {
     let iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
     let profileContainer = iframeDocument.getElementById('profile-wrapper');
 
+    if (profileContainer) {
+        profileContainer.querySelector('.pv-experience-section__see-more .pv-profile-section__text-truncate-toggle')?.click();
+        iframe.contentWindow.scrollBy(0, 300);
+        profileContainer.querySelector('.pv-skills-section__additional-skills')?.click();
+        iframe.contentWindow.scrollBy(0, 300);
+        profileContainer.querySelector('.pv-accomplishments-block__expand[aria-controls="languages-expandable-content"]')?.click();
+        setTimeout(function() {
+            parseIframeContents(iframe, container, profileContainer);
+        }, 200);
+    } else {
+        parseIframeContents(iframe, container, profileContainer);
+    }
+}
+
+function parseIframeContents(iframe, container, profileContainer) {
     let outputExpList = [];
     let skillsList = [];
     let languagesList = [];
@@ -148,8 +162,9 @@ function parseIframeContents(iframe, container) {
                                     
     if (profileContainer) {
 
+        console.log(profileContainer);
+
         // Parse experience
-        profileContainer.querySelector('.pv-experience-section__see-more .pv-profile-section__text-truncate-toggle')?.click();
         let experiences = profileContainer.querySelectorAll('#experience-section ul.section-info>li');
         experiences.forEach( (expBlock) => {
             let expData = parseExpBlock(expBlock);
@@ -159,7 +174,6 @@ function parseIframeContents(iframe, container) {
         console.log('parsed Experience', outputExpList);
 
         // Parse skills
-        profileContainer.querySelector('.pv-skills-section__additional-skills')?.click();
         let topSkills = profileContainer.querySelectorAll('.pv-profile-section ol.pv-skill-categories-section__top-skills>li');
         topSkills.forEach( (skillBlock) => {
             let skillData = parseSkillBlock(skillBlock);
@@ -176,8 +190,6 @@ function parseIframeContents(iframe, container) {
 
 
         // Parse languages
-        profileContainer.querySelector('.pv-accomplishments-block__expand')?.click();
-
         let languages = profileContainer.querySelectorAll('#languages-expandable-content ul.pv-accomplishments-block__list>li');
         languages.forEach( (languageBlock) => {
             let languageData = parseLanguageBlock(languageBlock);
@@ -212,7 +224,7 @@ function parseIframeContents(iframe, container) {
     //  - Senior Dev, Valant (3 y)
     //  - Senior Dev (1 y) . . . DevPro (3 y)
 
-    let totalExpMonths = outputExpList.map((item) => { return item.companyDurationMonths }).reduce((total, item) => { return total + item });
+    let totalExpMonths = outputExpList.map((item) => { return item.companyDurationMonths }).reduce((total, item) => { return total + item }, 0);
     let totalExpString = 'Опыт:';
     if (outputExpList.length == 0 || !totalExpMonths) {
         totalExpString += ' нет';
@@ -258,7 +270,11 @@ function parseIframeContents(iframe, container) {
 
     languagesList.forEach((language) => {
         let item = document.createElement('li');
-        item.innerHTML = `<b>${language.title}</b> (${language.level})`
+        let output = `<b>${language.title}</b>`;
+        if (language.level) {
+            output += ` (${language.level})`;
+        }
+        item.innerHTML = output;
         languageContainer.append(item);
     });
 
