@@ -37,3 +37,11 @@
     background: url('https://e7.pngegg.com/pngimages/233/449/png-clipart-magnifying-glass-computer-icons-magnifying-glass-glass-wikimedia-commons.png') 0 0 no-repeat;
     background-size: contain;
 }
+
+.user_extended_info_experience_hidden {
+    display: none;
+}
+
+.user_extended_info_experience_expand {
+    cursor: pointer;
+}

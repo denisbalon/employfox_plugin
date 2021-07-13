@@ -42,6 +42,14 @@ let config = {
 };
 observer.observe(bodyList, config);
 
+document.addEventListener('click',function(e) {
+    if (e.target && e.target.classList.contains('user_extended_info_experience_expand')) {
+        e.preventDefault();
+        e.target.previousElementSibling.classList.remove('user_extended_info_experience_hidden');
+        e.target.remove();
+     }
+ });
+
 processResults();
 
 function processResults() {
@@ -106,31 +114,31 @@ function loadPage(container, link) {
 
 function scrollIframeAndParse(iframe, container) {
     setTimeout(function() {
-        iframe.contentWindow.scrollBy(0, 300);
+        iframe.contentWindow.scrollBy(0, 500);
         setTimeout(function() {
-            iframe.contentWindow.scrollBy(0, 300);
+            iframe.contentWindow.scrollBy(0, 500);
             setTimeout(function() {
-                iframe.contentWindow.scrollBy(0, 300);
+                iframe.contentWindow.scrollBy(0, 500);
                 setTimeout(function() {
-                    iframe.contentWindow.scrollBy(0, 300);
+                    iframe.contentWindow.scrollBy(0, 500);
                     setTimeout(function() {
-                        iframe.contentWindow.scrollBy(0, 300);
+                        iframe.contentWindow.scrollBy(0, 500);
                         setTimeout(function() {
-                            iframe.contentWindow.scrollBy(0, 300);
+                            iframe.contentWindow.scrollBy(0, 500);
                             setTimeout(function() {
-                                iframe.contentWindow.scrollBy(0, 300);
+                                iframe.contentWindow.scrollBy(0, 500);
                                 setTimeout(function() {
-                                    iframe.contentWindow.scrollBy(0, 300);
+                                    iframe.contentWindow.scrollBy(0, 500);
                                     setTimeout(function() {
                                         expandHiddenSections(iframe, container);
-                                    }, 1000);
-                                }, 60);
+                                    }, 600);
+                                }, 50);
                             }, 50);
-                        }, 70);
-                    }, 60);
+                        }, 50);
+                    }, 50);
                 }, 50);
-            }, 70);
-        }, 60);
+            }, 50);
+        }, 50);
     }, 50);
 }
 
@@ -140,13 +148,17 @@ function expandHiddenSections(iframe, container) {
 
     if (profileContainer) {
         profileContainer.querySelector('.pv-experience-section__see-more .pv-profile-section__text-truncate-toggle')?.click();
-        iframe.contentWindow.scrollBy(0, 300);
-        profileContainer.querySelector('.pv-skills-section__additional-skills')?.click();
-        iframe.contentWindow.scrollBy(0, 300);
-        profileContainer.querySelector('.pv-accomplishments-block__expand[aria-controls="languages-expandable-content"]')?.click();
+        iframe.contentWindow.scrollBy(0, 500);
         setTimeout(function() {
-            parseIframeContents(iframe, container, profileContainer);
-        }, 500);
+            profileContainer.querySelector('.pv-skills-section__additional-skills')?.click();
+            iframe.contentWindow.scrollBy(0, 500);
+            setTimeout(function() {
+                profileContainer.querySelector('.pv-accomplishments-block__expand[aria-controls="languages-expandable-content"]')?.click();
+                setTimeout(function() {
+                    parseIframeContents(iframe, container, profileContainer);
+                }, 200);
+            }, 100);
+        }, 100);
     } else {
         parseIframeContents(iframe, container, profileContainer);
     }
@@ -369,13 +381,7 @@ function prepareExperience(outputExpList) {
     }
 
     let expString = outputExpList.map((companyItem) => {
-        if (companyItem.positionsList.length === 1) {
-            return ` • ${preparePositionTitle(companyItem.positionsList[0])}, <b>${prepareCompanyTitle(companyItem)}</b> (${companyItem.positionsList[0].duration})`;
-        } else {
-            return ' • ' + companyItem.positionsList.map(positionItem => {
-                return `${preparePositionTitle(positionItem)} (${positionItem.duration})`;
-            }).join(', ') + `, <b>${prepareCompanyTitle(companyItem)}</b> (${companyItem.companyDuration})`;
-        }
+        return ' • ' + preparePositionsList(companyItem) + `, <b>${prepareCompanyTitle(companyItem)}</b> (${companyItem.companyDuration})`;
     }).join('<br />');
     outDiv.innerHTML = totalExpString + '<br />' + expString;
 
@@ -393,6 +399,22 @@ function preparePositionTitle(positionItem) {
 function prepareCompanyTitle(companyItem) {
     let url = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(searchQuery())}%20${encodeURIComponent(companyItem.companyTitle)}&origin=GLOBAL_SEARCH_HEADER`
     return `${companyItem.companyTitle} <a class="user_extended_info_company_search_icon" href="${url}" target="_blank"></a>`;
+}
+
+function preparePositionsList(companyItem) {
+    if (companyItem.positionsList.length === 1) {
+        return preparePositionTitle(companyItem.positionsList[0]);
+    } else {
+        let output = `${preparePositionTitle(companyItem.positionsList[0])} (${companyItem.positionsList[0].duration})`;
+
+        output += '<span class="user_extended_info_experience_hidden">, ';
+        output += companyItem.positionsList.slice(1).map(positionItem => {
+            return `${preparePositionTitle(positionItem)} (${positionItem.duration})`;
+        }).join(', ');
+        output += '</span><a class="user_extended_info_experience_expand"> &hellip;</a>';
+
+        return output;
+    }
 }
 
 function prepareSkills(skillsList) {
