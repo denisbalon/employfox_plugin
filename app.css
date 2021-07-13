@@ -29,3 +29,11 @@
 .user_extended_info_block li:last-child::after {
     content: '';
 }
+
+.user_extended_info_company_search_icon {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background: url('https://e7.pngegg.com/pngimages/233/449/png-clipart-magnifying-glass-computer-icons-magnifying-glass-glass-wikimedia-commons.png') 0 0 no-repeat;
+    background-size: contain;
+}

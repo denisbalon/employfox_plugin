@@ -369,17 +369,13 @@ function prepareExperience(outputExpList) {
     }
 
     let expString = outputExpList.map((companyItem) => {
-
-
         if (companyItem.positionsList.length === 1) {
-            return ` • ${preparePositionTitle(companyItem.positionsList[0])}, <b>${companyItem.companyTitle}</b> (${companyItem.positionsList[0].duration})`;
+            return ` • ${preparePositionTitle(companyItem.positionsList[0])}, <b>${prepareCompanyTitle(companyItem)}</b> (${companyItem.positionsList[0].duration})`;
         } else {
             return ' • ' + companyItem.positionsList.map(positionItem => {
                 return `${preparePositionTitle(positionItem)} (${positionItem.duration})`;
-            }).join(', ') + `, <b>${companyItem.companyTitle}</b> (${companyItem.companyDuration})`;
+            }).join(', ') + `, <b>${prepareCompanyTitle(companyItem)}</b> (${companyItem.companyDuration})`;
         }
-
-
     }).join('<br />');
     outDiv.innerHTML = totalExpString + '<br />' + expString;
 
@@ -392,6 +388,11 @@ function preparePositionTitle(positionItem) {
     } else {
         return positionItem.title;
     }
+}
+
+function prepareCompanyTitle(companyItem) {
+    let url = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(searchQuery())}%20${encodeURIComponent(companyItem.companyTitle)}&origin=GLOBAL_SEARCH_HEADER`
+    return `${companyItem.companyTitle} <a class="user_extended_info_company_search_icon" href="${url}" target="_blank"></a>`;
 }
 
 function prepareSkills(skillsList) {
@@ -436,4 +437,20 @@ function visibleText(container) {
     }
     
     return Array.from(container.childNodes).filter((node) => { return node.nodeType == 3 }).map((node) => { return node.nodeValue }).join('').trim();
+}
+
+function getQueryVariable(variable) {
+    var query = window.location.search.substring(1);
+    var vars = query.split('&');
+    for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split('=');
+        if (decodeURIComponent(pair[0]) == variable) {
+            return decodeURIComponent(pair[1]);
+        }
+    }
+    console.log('Query variable %s not found', variable);
+}
+
+function searchQuery() {
+    return getQueryVariable('keywords');
 }
