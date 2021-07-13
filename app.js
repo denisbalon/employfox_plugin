@@ -53,6 +53,10 @@ document.addEventListener('click',function(e) {
 processResults();
 
 function processResults() {
+    if (!window.location.href.startsWith('https://www.linkedin.com/search/results/')) {
+        return false;
+    }
+
     pagesQueue = [];
 
     // Use this to parse everything
@@ -64,7 +68,7 @@ function processResults() {
     results.forEach(function(item) {
         let link = item.querySelector(linkSelector);
 
-        if (link) {
+        if (link && link.href.startsWith('https://www.linkedin.com/in/')) {
             pagesQueue.push({container: item, link: link});
         }
     });
