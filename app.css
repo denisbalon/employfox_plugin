@@ -45,3 +45,11 @@
 .user_extended_info_experience_expand {
     cursor: pointer;
 }
+
+.clear_message_btn {
+    position: absolute;
+    display: inline-block;
+    right: 0;
+    top: -25px;
+    cursor: pointer;
+}

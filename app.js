@@ -1,6 +1,8 @@
 const resultsSelector = '.entity-result';
 const linkSelector = '.entity-result__title-text a.app-aware-link';
 let openCounter = sessionCounter = 0;
+let messageTemplate = '';
+let messageTemplateTemp;
 
 console.log('employfox initialized');
   
@@ -8,6 +10,13 @@ chrome.storage.local.get(['openCounter'], function(result) {
     console.log('Page open counter from storage: ' + result.openCounter);
     if (result.openCounter) {
         openCounter = result.openCounter;
+    }
+});
+
+chrome.storage.local.get(['messageTemplate'], function(result) {
+    console.log('Message template from storage:', result.messageTemplate);
+    if (result.messageTemplate) {
+        messageTemplate = result.messageTemplate;
     }
 });
 
@@ -47,6 +56,49 @@ document.addEventListener('click',function(e) {
         e.preventDefault();
         e.target.previousElementSibling.classList.remove('user_extended_info_experience_hidden');
         e.target.remove();
+     } else if (e.target.classList.contains('artdeco-button__text') && e.target.parentElement.classList.contains('artdeco-button--secondary') && e.target.closest('.entity-result__actions')) {
+        setTimeout(function () {
+            console.log('click add note button');
+            let addNoteButton = document.querySelector('.artdeco-modal.send-invite .artdeco-modal__actionbar .artdeco-button--secondary');
+
+            if (addNoteButton) {
+                addNoteButton.click();
+                setTimeout(function() {
+                    let modal = document.querySelector('.artdeco-modal.send-invite');
+                    if (modal) {
+                        let messageText = modal.querySelector('#custom-message');
+                        if (messageText) {
+                            messageText.value = messageTemplate;
+                            messageText.blur();
+                            messageText.focus();
+                            messageTemplateTemp = messageTemplate;
+
+                            messageText.addEventListener('input', function() {
+                                messageTemplateTemp = messageText.value;
+                            });
+
+                            let clearMessageText = document.createElement('a');
+                            clearMessageText.classList.add('clear_message_btn');
+                            clearMessageText.innerText = 'Очистить';
+                            messageText.parentElement.append(clearMessageText);
+                        }
+                    }
+                }, 50);
+            }
+        }, 50);
+     } else if (e.target.classList.contains('artdeco-button__text') && e.target.parentElement.classList.contains('artdeco-button--primary') && e.target.closest('.artdeco-modal')) {
+        console.log('send button clicked');
+        messageTemplate = messageTemplateTemp;
+        chrome.storage.local.set({messageTemplate: messageTemplate});
+     } else if (e.target.classList.contains('clear_message_btn')) {
+         console.log('clear message clicked');
+        let messageText = e.target.parentElement.querySelector('#custom-message');
+        if (messageText) {
+            messageTemplateTemp = '';
+            messageText.value = messageTemplateTemp;
+            messageText.blur();
+            messageText.focus();
+        }
      }
  });
 
