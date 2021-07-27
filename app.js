@@ -129,6 +129,14 @@ function processResults() {
 
 function processQueue() {
     if (pagesQueue.length == 0) {
+        let searchResultsContainer = document.querySelector('.search-results-container');
+        
+        if (searchResultsContainer) {
+            if (!searchResultsContainer.classList.contains('loaded')) {
+                searchResultsContainer.classList.add('loaded');
+            }
+        }
+
         return;
     }
 
@@ -151,8 +159,8 @@ function loadPage(container, link) {
     const topOffset = document.querySelector('#main').offsetTop;
 
     // iframe.allowTransparency = true;
-    iframe.style.width = '500px';
-    iframe.style.height = '400px';
+    iframe.style.width = '700px';
+    iframe.style.height = '1000px';
     iframe.style.border = '1px solid #c1c1c1;';
     iframe.style.background = '#fff';
     iframe.style.zIndex = '-99999';
@@ -170,24 +178,24 @@ function loadPage(container, link) {
 
 function scrollIframeAndParse(iframe, container) {
     setTimeout(function() {
-        iframe.contentWindow.scrollBy(0, 500);
+        scrollIframe(iframe, 500);
         setTimeout(function() {
-            iframe.contentWindow.scrollBy(0, 500);
+            scrollIframe(iframe, 500);
             setTimeout(function() {
-                iframe.contentWindow.scrollBy(0, 500);
+                scrollIframe(iframe, 500);
                 setTimeout(function() {
-                    iframe.contentWindow.scrollBy(0, 500);
+                    scrollIframe(iframe, 500);
                     setTimeout(function() {
-                        iframe.contentWindow.scrollBy(0, 500);
+                        scrollIframe(iframe, 500);
                         setTimeout(function() {
-                            iframe.contentWindow.scrollBy(0, 500);
+                            scrollIframe(iframe, 500);
                             setTimeout(function() {
-                                iframe.contentWindow.scrollBy(0, 500);
+                                scrollIframe(iframe, 500);
                                 setTimeout(function() {
-                                    iframe.contentWindow.scrollBy(0, 500);
+                                    scrollIframe(iframe, 500);
                                     setTimeout(function() {
                                         expandHiddenSections(iframe, container);
-                                    }, 600);
+                                    }, 1600);
                                 }, 50);
                             }, 50);
                         }, 50);
@@ -203,13 +211,25 @@ function expandHiddenSections(iframe, container) {
     let profileContainer = iframeDocument.getElementById('profile-wrapper');
 
     if (profileContainer) {
+        let activeElement = document.activeElement;
         profileContainer.querySelector('.pv-experience-section__see-more .pv-profile-section__text-truncate-toggle')?.click();
-        iframe.contentWindow.scrollBy(0, 500);
+        if (activeElement) {
+            activeElement.focus();
+        }
+        scrollIframe(iframe, 500);
         setTimeout(function() {
+            let activeElement = document.activeElement;
             profileContainer.querySelector('.pv-skills-section__additional-skills')?.click();
-            iframe.contentWindow.scrollBy(0, 500);
+            if (activeElement) {
+                activeElement.focus();
+            }
+            scrollIframe(iframe, 500);
             setTimeout(function() {
+                let activeElement = document.activeElement;
                 profileContainer.querySelector('.pv-accomplishments-block__expand[aria-controls="languages-expandable-content"]')?.click();
+                if (activeElement) {
+                    activeElement.focus();
+                }
                 setTimeout(function() {
                     parseIframeContents(iframe, container, profileContainer);
                 }, 200);
@@ -531,4 +551,14 @@ function getQueryVariable(variable) {
 
 function searchQuery() {
     return getQueryVariable('keywords');
+}
+
+function scrollIframe(iframe, scrollBy) {
+    let activeElement = document.activeElement;
+
+    iframe.contentWindow.scrollBy(0, scrollBy);
+
+    if (activeElement) {
+        activeElement.focus();
+    }
 }

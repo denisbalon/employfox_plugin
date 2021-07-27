@@ -53,3 +53,17 @@
     top: -25px;
     cursor: pointer;
 }
+
+.search-results-container .entity-result .artdeco-button.artdeco-button--secondary {
+    box-shadow: inset 0 0 0 1px #999;
+    color: #999;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.search-results-container.loaded .entity-result .artdeco-button.artdeco-button--secondary {
+    cursor: pointer;
+    pointer-events: inherit;
+    color: var(--color-action);
+    box-shadow: inset 0 0 0 1px var(--color-action);
+}
