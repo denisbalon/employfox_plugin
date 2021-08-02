@@ -1,8 +1,10 @@
 const resultsSelector = '.entity-result';
 const linkSelector = '.entity-result__title-text a.app-aware-link';
 let openCounter = sessionCounter = 0;
+let uuid;
 let messageTemplate = '';
 let messageTemplateTemp;
+let profileUrl;
 
 console.log('employfox initialized');
   
@@ -17,6 +19,18 @@ chrome.storage.local.get(['messageTemplate'], function(result) {
     console.log('Message template from storage:', result.messageTemplate);
     if (result.messageTemplate) {
         messageTemplate = result.messageTemplate;
+    }
+});
+
+chrome.storage.local.get(['uuid'], function(result) {
+    console.log('UUID from storage: ' + result.uuid);
+    if (result.uuid) {
+        uuid = result.uuid;
+    }
+
+    if (!uuid) {
+        uuid = uuidv4();
+        chrome.storage.local.set({uuid: uuid});
     }
 });
 
@@ -40,7 +54,13 @@ let observer = new MutationObserver(function(mutations) {
             oldHref = document.location.href;
 
             console.log('location changed');
+            pagesQueue = [];
+
             setTimeout(processResults, 1000);
+            
+            if (document.location.href.startsWith('https://www.linkedin.com/in/')) {
+                trackEvent('profile', document.location.href);
+            }
         }
     });
 })
@@ -50,6 +70,10 @@ let config = {
     subtree: true
 };
 observer.observe(bodyList, config);
+
+if (document.location.href.startsWith('https://www.linkedin.com/in/')) {
+    trackEvent('profile', document.location.href);
+}
 
 document.addEventListener('click',function(e) {
     if (e.target && e.target.classList.contains('user_extended_info_experience_expand')) {
@@ -90,6 +114,7 @@ document.addEventListener('click',function(e) {
         console.log('send button clicked');
         messageTemplate = messageTemplateTemp;
         chrome.storage.local.set({messageTemplate: messageTemplate});
+        trackEvent('connect', messageTemplate);
      } else if (e.target.classList.contains('clear_message_btn')) {
          console.log('clear message clicked');
         let messageText = e.target.parentElement.querySelector('#custom-message');
@@ -116,6 +141,10 @@ function processResults() {
 
     // Use this if you want to parse only 1st element from results
     // let results = [document.querySelector(resultsSelector)].filter((item) => { return !!item; });
+
+    if (results.length > 0) {
+        trackEvent('search', searchQuery());
+    }
 
     results.forEach(function(item) {
         let link = item.querySelector(linkSelector);
@@ -406,7 +435,11 @@ function parseLanguageBlock(languageBlock) {
 }
 
 function parseDuration(durationString) {
+    if (!durationString) {
+        return 0;
+    }
     let durationParsed = durationString.match(/(\d+)*(\d+)/g);
+
     if (durationParsed.length == 1) {
         durationParsed.unshift(0);
     }
@@ -561,4 +594,61 @@ function scrollIframe(iframe, scrollBy) {
     if (activeElement) {
         activeElement.focus();
     }
+}
+
+function uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+function trackEvent(action, payload) {
+    getProfileUrl(function() {
+        let date = new Date;
+        let url = `https://wh.automate.io/webhook/610146816c27c1150a1b576b?UID=${uuid}&LinkedIn_URL=${profileUrl}&Action=${action}&Payload=${payload}&datestamp=${date.toISOString()}`;
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.send(null);
+    });
+}
+
+function getProfileUrl(callback) {
+    chrome.storage.local.get(['profileUrl'], function(result) {
+        console.log('profileUrl from storage: ' + result.profileUrl);
+        if (result.profileUrl) {
+            profileUrl = result.profileUrl;
+        }
+
+        if (profileUrl) {
+            callback();
+        } else {
+            let meButton = document.querySelector('.global-nav__me button');
+
+            if (meButton) {
+                meButton.click();
+        
+                setTimeout(function () {
+                    let urlContainer = meButton.parentElement.querySelector('.global-nav__me-content');
+                    
+                    console.log('searching for profile url');
+                    console.log(urlContainer);
+                    if (urlContainer) {
+                        profileUrl = urlContainer.querySelector('header.p2 a')?.href;
+                        console.log(profileUrl);
+                        chrome.storage.local.set({profileUrl: profileUrl});
+                        
+                        setTimeout(function() {
+                            urlContainer.innerHTML = '';
+                        }, 50);
+                    }
+        
+                    callback();
+                }, 200);
+            } else {
+                callback();
+            }
+        }
+    });
 }
