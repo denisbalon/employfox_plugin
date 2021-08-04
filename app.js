@@ -5,25 +5,20 @@ let uuid;
 let messageTemplate = '';
 let messageTemplateTemp;
 let profileUrl;
-
-console.log('employfox initialized');
   
 chrome.storage.local.get(['openCounter'], function(result) {
-    console.log('Page open counter from storage: ' + result.openCounter);
     if (result.openCounter) {
         openCounter = result.openCounter;
     }
 });
 
 chrome.storage.local.get(['messageTemplate'], function(result) {
-    console.log('Message template from storage:', result.messageTemplate);
     if (result.messageTemplate) {
         messageTemplate = result.messageTemplate;
     }
 });
 
 chrome.storage.local.get(['uuid'], function(result) {
-    console.log('UUID from storage: ' + result.uuid);
     if (result.uuid) {
         uuid = result.uuid;
     }
@@ -53,14 +48,9 @@ let observer = new MutationObserver(function(mutations) {
         if (oldHref != document.location.href) {
             oldHref = document.location.href;
 
-            console.log('location changed');
             pagesQueue = [];
 
             setTimeout(processResults, 1000);
-            
-            if (document.location.href.startsWith('https://www.linkedin.com/in/')) {
-                trackEvent('profile', document.location.href);
-            }
         }
     });
 })
@@ -71,10 +61,6 @@ let config = {
 };
 observer.observe(bodyList, config);
 
-if (document.location.href.startsWith('https://www.linkedin.com/in/')) {
-    trackEvent('profile', document.location.href);
-}
-
 document.addEventListener('click',function(e) {
     if (e.target && e.target.classList.contains('user_extended_info_experience_expand')) {
         e.preventDefault();
@@ -82,7 +68,6 @@ document.addEventListener('click',function(e) {
         e.target.remove();
      } else if (e.target.classList.contains('artdeco-button__text') && e.target.parentElement.classList.contains('artdeco-button--secondary') && e.target.closest('.entity-result__actions')) {
         setTimeout(function () {
-            console.log('click add note button');
             let addNoteButton = document.querySelector('.artdeco-modal.send-invite .artdeco-modal__actionbar .artdeco-button--secondary');
 
             if (addNoteButton) {
@@ -111,12 +96,10 @@ document.addEventListener('click',function(e) {
             }
         }, 50);
      } else if (e.target.classList.contains('artdeco-button__text') && e.target.parentElement.classList.contains('artdeco-button--primary') && e.target.closest('.artdeco-modal')) {
-        console.log('send button clicked');
         messageTemplate = messageTemplateTemp;
         chrome.storage.local.set({messageTemplate: messageTemplate});
         trackEvent('connect', messageTemplate);
      } else if (e.target.classList.contains('clear_message_btn')) {
-         console.log('clear message clicked');
         let messageText = e.target.parentElement.querySelector('#custom-message');
         if (messageText) {
             messageTemplateTemp = '';
@@ -200,6 +183,8 @@ function loadPage(container, link) {
     iframe.src = link.href;
     document.body.append(iframe);
 
+    trackEvent('profile', link.href);
+
     setTimeout(function() {
         scrollIframeAndParse(iframe, container);
     }, 1000);
@@ -270,8 +255,6 @@ function expandHiddenSections(iframe, container) {
 }
 
 function parseIframeContents(iframe, container, profileContainer) {
-    console.log('parsing iframe...');    
-
     let outputExpList = parseExperience(profileContainer);
     let skillsList = parseSkills(profileContainer);
     let languagesList = parseLanguages(profileContainer);
@@ -279,7 +262,6 @@ function parseIframeContents(iframe, container, profileContainer) {
     drawUserData(outputExpList, skillsList, languagesList, container);
 
     iframe.remove();
-    console.log('iframe removed');
 
     processQueue();
 }
@@ -295,8 +277,6 @@ function parseExperience(profileContainer) {
         let expData = parseExpBlock(expBlock);
         outputExpList.push(expData);
     });
-
-    console.log('parsed Experience', outputExpList);
 
     return outputExpList;
 }
@@ -386,8 +366,6 @@ function parseSkills(profileContainer) {
         let skillData = parseSkillBlock(skillBlock);
         skillsList.push(skillData);
     });
-    
-    console.log('parsed Skills', skillsList);
 
     return skillsList;
 }
@@ -416,8 +394,6 @@ function parseLanguages(profileContainer) {
         let languageData = parseLanguageBlock(languageBlock);
         languagesList.push(languageData);
     });
-
-    console.log('parsed Languages', languagesList);
 
     return languagesList;
 }
@@ -579,7 +555,6 @@ function getQueryVariable(variable) {
             return decodeURIComponent(pair[1]);
         }
     }
-    console.log('Query variable %s not found', variable);
 }
 
 function searchQuery() {
@@ -616,7 +591,6 @@ function trackEvent(action, payload) {
 
 function getProfileUrl(callback) {
     chrome.storage.local.get(['profileUrl'], function(result) {
-        console.log('profileUrl from storage: ' + result.profileUrl);
         if (result.profileUrl) {
             profileUrl = result.profileUrl;
         }
@@ -632,11 +606,8 @@ function getProfileUrl(callback) {
                 setTimeout(function () {
                     let urlContainer = meButton.parentElement.querySelector('.global-nav__me-content');
                     
-                    console.log('searching for profile url');
-                    console.log(urlContainer);
                     if (urlContainer) {
                         profileUrl = urlContainer.querySelector('header.p2 a')?.href;
-                        console.log(profileUrl);
                         chrome.storage.local.set({profileUrl: profileUrl});
                         
                         setTimeout(function() {
