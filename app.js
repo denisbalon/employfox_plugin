@@ -1,10 +1,16 @@
 const resultsSelector = '.entity-result';
 const linkSelector = '.entity-result__title-text a.app-aware-link';
+const maxRetries = 5;
+const parseRetryTimeout = 500;
+
 let openCounter = sessionCounter = 0;
 let uuid;
 let messageTemplate = '';
 let messageTemplateTemp;
 let profileUrl;
+let retries = 0;
+
+let parsedExperience = parsedSkills = parsedLanguages = [];
   
 chrome.storage.local.get(['openCounter'], function(result) {
     if (result.openCounter) {
@@ -185,12 +191,16 @@ function loadPage(container, link) {
 
     trackEvent('profile', link.href);
 
+    retries = 0;
+    parsedExperience = parsedSkills = parsedLanguages = [];
     setTimeout(function() {
         scrollIframeAndParse(iframe, container);
     }, 1000);
 }
 
 function scrollIframeAndParse(iframe, container) {
+    iframe.contentWindow.scrollTo(0, 0);
+
     setTimeout(function() {
         scrollIframe(iframe, 500);
         setTimeout(function() {
@@ -259,7 +269,28 @@ function parseIframeContents(iframe, container, profileContainer) {
     let skillsList = parseSkills(profileContainer);
     let languagesList = parseLanguages(profileContainer);
 
-    drawUserData(outputExpList, skillsList, languagesList, container);
+    if (outputExpList.length) {
+        parsedExperience = outputExpList;
+    }
+    if (skillsList.length) {
+        parsedSkills = skillsList;
+    }
+    if (languagesList.length) {
+        parsedLanguages = languagesList;
+    }
+
+    if (
+        (!parsedExperience?.length || !parsedSkills?.length || !parsedLanguages?.length) &&
+        retries < maxRetries
+    ) {
+        retries++;
+        setTimeout(function () {
+            scrollIframeAndParse(iframe, container);
+        }, parseRetryTimeout);
+        return;
+    }
+
+    drawUserData(parsedExperience, parsedSkills, parsedLanguages, container);
 
     iframe.remove();
 
